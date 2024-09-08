@@ -5,11 +5,12 @@ import os
 
 # Initialize MediaPipe Pose.
 mp_pose = mp.solutions.pose
+mp_drawing = mp.solutions.drawing_utils  # Utility to draw landmarks and connections
 pose = mp_pose.Pose(static_image_mode=True, min_detection_confidence=0.5)
 
 # Input and output folder paths
-input_folder = 'C:\\Users\\Santosh\\Desktop\\fyp\\input_pic'
-output_folder = 'C:\\Users\\Santosh\\Desktop\\fyp\\output_pic'
+input_folder = 'C:\\Users\\Santosh\\Desktop\\fyp\\DATASET\\TEST\\tree'
+output_folder = 'C:\\Users\\Santosh\\Desktop\\fyp\\src\\output_pic_withline\\test\\tree'
 
 # Create output folder if it doesn't exist
 os.makedirs(output_folder, exist_ok=True)
@@ -29,17 +30,20 @@ for filename in os.listdir(input_folder):
         result = pose.process(image_rgb)
 
         # Create a blank numpy array with zeros
-        keypoints_image = np.zeros((image_height, image_width, 3), dtype=np.uint8)
+        skeleton_image = np.zeros((image_height, image_width, 3), dtype=np.uint8)
 
-        # Draw the keypoints on the blank image
+        # Draw the skeleton on the blank image
         if result.pose_landmarks:
-            for landmark in result.pose_landmarks.landmark:
-                x = int(landmark.x * image_width)
-                y = int(landmark.y * image_height)
-                cv2.circle(keypoints_image, (x, y), 5, (255, 255, 255), -1)
+            mp_drawing.draw_landmarks(
+                skeleton_image, 
+                result.pose_landmarks, 
+                mp_pose.POSE_CONNECTIONS,  # This connects the keypoints to form the skeleton
+                landmark_drawing_spec=mp_drawing.DrawingSpec(color=(255, 255, 255), thickness=5, circle_radius=5),
+                connection_drawing_spec=mp_drawing.DrawingSpec(color=(255, 255, 255), thickness=2, circle_radius=2)
+            )
 
-        # Save the image with keypoints
+        # Save the image with the skeleton
         output_path = os.path.join(output_folder, filename)
-        cv2.imwrite(output_path, keypoints_image)
+        cv2.imwrite(output_path, skeleton_image)
 
 print("Processing complete.")
